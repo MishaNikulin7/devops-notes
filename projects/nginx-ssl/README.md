@@ -1,23 +1,21 @@
-# Nginx с SSL
+# Nginx + SSL
 
 ## Цель
-Документирование веб-сервера и TLS сертификатов.
+Документирование веб-сервера и TLS сертификатов на VPS.
 
-## Проверка конфигурации
+## Состояние сервера
+systemctl status nginx
+
+## Сертификаты
+
+| Домен | Дата окончания | Статус |
+|-------|----------------|--------|
+| m.nikulin.dev | 2026-08-21 | VALID |
+| zbx.nikulin.dev | 2026-08-21 | VALID |
+
+## Команды
+```bash
 nginx -T
 systemctl reload nginx
-
-## Установка Certbot
-dnf install certbot python3-certbot-nginx -y
-certbot --nginx -d m.nikulin.dev
-certbot --nginx -d zbx.nikulin.dev
-
-## Автоматическое обновление сертификатов
+certbot certificates
 systemctl status certbot-renew.timer
-systemctl enable --now certbot-renew.timer
-certbot renew --dry-run
-
-## Что практиковал
-- Настройка Nginx
-- Настройка SSL сертификатов
-- Проверка автоматического обновления
