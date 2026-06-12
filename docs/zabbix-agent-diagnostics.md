@@ -93,3 +93,13 @@ RESOLVED
 ```
 
 Zabbix Server успешно получает данные от Zabbix Agent.
+
+## Скриншоты
+
+### Zabbix Agent недоступен
+
+![Zabbix Agent unavailable](./Безымянный37.png)
+
+### Проблема решена
+
+![Zabbix Agent resolved](./Безымянный38.png)
