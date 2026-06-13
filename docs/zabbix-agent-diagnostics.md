@@ -96,11 +96,11 @@ Zabbix Server успешно получает данные от Zabbix Agent.
 
 ## Скриншоты
 
-### Zabbix Agent недоступен
+### Zabbix Agent недоступен
 
 ![Zabbix Agent unavailable](./screenshots/zabbix-agent-unavailable.png)
 
 ###  Проблема решена
 
-![Zabbix Agent resolved](./screenshot/zabbix-agent-resolved.png)
+![Zabbix Agent resolved](./screenshots/zabbix-agent-resolved.png)
 
