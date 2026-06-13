@@ -102,5 +102,5 @@ Zabbix Server успешно получает данные от Zabbix Agent.
 
 ###  Проблема решена
 
-![Zabbix Agent resolved](./screenshot/szabbix-agent-resolved.png)
+![Zabbix Agent resolved](./screenshot/zabbix-agent-resolved.png)
 
