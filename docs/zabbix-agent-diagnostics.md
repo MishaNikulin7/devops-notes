@@ -98,9 +98,9 @@ Zabbix Server успешно получает данные от Zabbix Agent.
 
 ### Zabbix Agent недоступен
 
-![Zabbix Agent unavailable](./screenshots/zabbix-agent-unavailable.png)
+![Zabbix Agent unavailable](./screenshots/problem.png)
 
 ###  Проблема решена
 
-![Zabbix Agent resolved](./screenshots/zabbix-agent-resolved.png)
+![Zabbix Agent resolved](./screenshots/fix.png)
 
