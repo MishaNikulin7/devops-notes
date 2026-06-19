@@ -52,32 +52,16 @@ docker rm 3x-ui
 
 ---
 
-## 🧪 5. Запуск новой версии
+🧪 5. Запуск новой версии
 
-docker run -d \
-  --name 3x-ui-new \
-  -v /root/x-ui-db:/etc/x-ui \
-  -p 2053:2053 \
-  -p 4443:4443 \
-  -p 5443:5443 \
-  -p 7443:7443 \
-  --restart unless-stopped \
-  ghcr.io/mhsanaei/3x-ui:v3.3.1
-
----
-
-## 🔍 6. Проверка
-
-```bash
 docker ps
 docker logs 3x-ui --tail 50
 
 Ожидаем:
-- новая версия активна
-- старая сохранена
 
----
+новая версия активна
+старая сохранена
 
-## ⚠️ ВАЖНО
+⚠️ ВАЖНО
+НЕ удалять /root/x-ui-db
 
-- НЕ удалять /root/x-ui-db
