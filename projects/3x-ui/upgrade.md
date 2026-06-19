@@ -46,6 +46,7 @@ docker pull ghcr.io/mhsanaei/3x-ui:v3.3.1
 
 ## 🔁 4. Переключение
 
+```bash
 docker stop 3x-ui
 docker rm 3x-ui
 
@@ -67,6 +68,7 @@ docker run -d \
 
 ## 🔍 6. Проверка
 
+```bash
 docker ps
 docker logs 3x-ui --tail 50
 
