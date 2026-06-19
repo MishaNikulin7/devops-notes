@@ -52,7 +52,7 @@ docker rm 3x-ui
 
 ---
 
-🧪 5. Запуск новой версии
+## 🧪 5. Запуск новой версии
 
 docker ps
 docker logs 3x-ui --tail 50
