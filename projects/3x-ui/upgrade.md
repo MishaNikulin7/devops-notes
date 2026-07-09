@@ -30,9 +30,17 @@ docker images | grep 3x-ui
 
 ## 💾 2. Backup
 
-tar -czvf xui-backup-$(date +%F).tar.gz /root/x-ui-db
+cp /root/x-ui-db/x-ui.db \
+/root/x-ui-db/backups/x-ui.db.$(date +%F).bak
 
 - файл backup создан
+
+После выполнения:
+
+```text
+/root/x-ui-db/backups/
+└── x-ui.db.2026-07-09.bak
+```
 
 ---
 
@@ -61,6 +69,68 @@ docker logs 3x-ui --tail 50
 новая версия активна
 старая сохранена
 
-⚠️ ВАЖНО
-НЕ удалять /root/x-ui-db
+## Восстановление из резервной копии
+
+### 1. Остановить контейнер
+
+```bash
+docker stop 3x-ui
+```
+
+### 2. Удалить контейнер
+
+```bash
+docker rm 3x-ui
+```
+
+### 3. Восстановить базу
+
+```bash
+cp /root/x-ui-db/backups/x-ui.db.2026-07-09.bak \
+/root/x-ui-db/x-ui.db
+```
+
+### 4. Запустить контейнер
+
+```bash
+docker run -d \
+  --name 3x-ui \
+  -v /root/x-ui-db:/etc/x-ui \
+  -p 2053:2053 \
+  -p 4443:4443 \
+  -p 5443:5443 \
+  -p 7443:7443 \
+  --restart unless-stopped \
+  ghcr.io/mhsanaei/3x-ui:v3.3.1
+```
+
+### 5. Проверить состояние
+
+```bash
+docker ps | grep 3x-ui
+docker logs 3x-ui --tail 30
+```
+
+Убедиться:
+
+- панель открывается;
+- VPN подключается;
+- пользователи и inbound восстановлены.
+
+## ⚠️ Важно
+
+Не удалять рабочие файлы SQLite:
+
+```text
+x-ui.db
+x-ui.db-shm
+x-ui.db-wal
+system_metrics.gob
+```
+
+Резервные копии хранить только в каталоге:
+
+```text
+/root/x-ui-db/backups/
+```
 
