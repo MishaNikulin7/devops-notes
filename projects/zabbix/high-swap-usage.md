@@ -39,7 +39,17 @@ Swap: 1.0 GiB
 - MySQL
 - Zabbix Server
 - Zabbix Agent
+- Nginx
 - 3x-ui
+
+Роли сервисов:
+
+- Nginx — веб-сервер и обратный прокси.
+- Docker — запуск контейнерных сервисов.
+- MySQL — база данных для Zabbix.
+- Zabbix Server — сбор и обработка метрик.
+- Zabbix Agent — отправка информации о состоянии сервера.
+- 3x-ui — сервис управления Xray.
 
 ---
 
@@ -49,10 +59,13 @@ Swap: 1.0 GiB
 
 ```bash
 free -h
+
 Проверка Swap:
 swapon --show
+
 Проверка активности Swap:
 vmstat 1 5
+
 Результат:
 Swap использовался примерно на 500 MiB.
 При этом:
@@ -85,12 +98,18 @@ sysctl --system
 Проверка после перезагрузки
 
 После reboot проверено:
+
 Kernel:
 uname -r
+
 Docker:
 docker ps
+
 Zabbix Agent:
 systemctl status zabbix-agent
+
+Nginx:
+systemctl status nginx
 Все сервисы успешно запустились.
 
 Результат
