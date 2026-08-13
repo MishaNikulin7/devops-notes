@@ -3,20 +3,30 @@
 Практический проект по настройке Nginx на собственном Linux VPS.
 
 Nginx используется как точка входа для нескольких сервисов:
-принимает HTTP/HTTPS-запросы, выполняет перенаправление на HTTPS
+принимает HTTP/HTTPS-запросы, перенаправляет HTTP на HTTPS
 и проксирует запросы к локальным backend-сервисам.
+
+## Что реализовано
+
+- Nginx reverse proxy для нескольких сервисов
+- отдельные virtual hosts
+- перенаправление HTTP → HTTPS
+- TLS 1.2 / TLS 1.3
+- Let's Encrypt + Certbot
+- автоматическое обновление сертификатов через systemd timer
+- проксирование запросов к локальным backend-сервисам
+- диагностика через `nginx -t`, `systemctl`, `journalctl`, `ss` и `curl`
 
 ## Стек
 
 - AlmaLinux 9
 - Nginx
 - systemd
-- Let's Encrypt
-- Certbot
-- TLS 1.2 / TLS 1.3
-- DNS
+- Let's Encrypt / Certbot
 - Docker
 - Zabbix
+- DNS
+- HTTP/HTTPS
 
 ## Архитектура
 
@@ -271,30 +281,17 @@ journalctl -u nginx -n 50
 
 ```bash
 tail -f /var/log/nginx/zbx.nikulin.dev.error.log
+```
+
+### 6. Очистка логов
+
+```bash
 find /var/log/nginx -type f -mtime +30 -ls
 find /var/log/nginx -type f -mtime +30 -delete
 ```
 
-### 6. Backend
+### 7. Backend
 
 ```bash
 curl -I http://127.0.0.1:8081
 ```
-
-Если backend недоступен локально, проблема находится ниже уровня Nginx.
-
-## Что отрабатывается в проекте
-
-- администрирование Linux-сервера;
-- systemd;
-- настройка Nginx;
-- reverse proxy;
-- HTTP/HTTPS;
-- TLS;
-- Let's Encrypt / Certbot;
-- DNS;
-- TCP-порты;
-- работа с логами;
-- взаимодействие Nginx с Docker-сервисами;
-- диагностика web-сервисов.
-.
