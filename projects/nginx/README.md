@@ -20,23 +20,35 @@ Nginx используется как точка входа для нескол�
 ## Архитектура
 
 ```text
-                         Internet
-                            |
-                  HTTP :80 / HTTPS :443
-                            |
-                            v
-                         Nginx
-                      Reverse Proxy
-                       /          \
-                      /            \
-                     v              v
-             m.nikulin.dev     zbx.nikulin.dev
-                     |              |
-                     v              v
-             127.0.0.1:2053   127.0.0.1:8081
-                    |                |
-                    v                v
-            Docker service    Docker service
+                              Internet
+                                  |
+                                  | HTTPS :443
+                                  v
+                     +-------------------------+
+                     |       VPS / Nginx       |
+                     |       Public IP         |
+                     +-------------------------+
+                                  |
+                           TLS termination
+                                  |
+                                  v
+                         127.0.0.1:8081
+                                  |
+                                  v
+                           docker-proxy
+                                  |
+                                  | TCP
+                                  v
+                    172.16.238.1:* (Docker bridge)
+                                  |
+                                  v
+                    172.16.238.2:8080
+                                  |
+                                  v
+                     +----------------------+
+                     |     Zabbix Web       |
+                     |   Docker container   |
+                     +----------------------+
 ```
 
 Nginx принимает внешние подключения на портах `80` и `443`.
