@@ -22,7 +22,7 @@ Nginx используется как точка входа для нескол�
 ```text
                          Internet
                             |
-                     HTTP :80 / HTTPS :443
+                  HTTP :80 / HTTPS :443
                             |
                             v
                          Nginx
