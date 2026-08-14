@@ -36,7 +36,7 @@ Nginx используется как точка входа для нескол�
              127.0.0.1:2053   127.0.0.1:8081
                     |                |
                     v                v
-            Docker service        Docker service
+            Docker service    Docker service
 ```
 
 Nginx принимает внешние подключения на портах `80` и `443`.
