@@ -1,20 +1,204 @@
-# Zabbix
+# Zabbix Monitoring Stack
 
-## Цель
-Мониторинг VPS-сервера с помощью Zabbix, развернутого в Docker.
+## Обзор
 
-## Контейнеры
-| Контейнер | Образ | Статус |
-|-----------|-------|--------|
-| zabbix-server-mysql | zabbix/zabbix-server-mysql:alpine-7.0-latest | Up 13 дней |
-| zabbix-web-nginx-mysql | zabbix/zabbix-web-nginx-mysql:alpine-7.0-latest | Up 13 дней (healthy) |
+Zabbix развернут на VPS с использованием Docker Compose.
+
+Стек состоит из:
+
+- Zabbix Server
+- Zabbix Web
+- MySQL 8.0
+- Nginx reverse proxy на хосте
+- нескольких Docker-сетей для разделения компонентов
+- persistent storage для базы данных
+- Docker Compose secrets для учетных данных
+- healthcheck для проверки состояния Zabbix Web
+
+## Компоненты
+
+| Компонент | Docker image | Назначение |
+|---|---|---|
+| Zabbix Server | `zabbix/zabbix-server-mysql:alpine-7.0-latest` | Основной сервер мониторинга |
+| Zabbix Web | `zabbix/zabbix-web-nginx-mysql:alpine-7.0-latest` | Веб-интерфейс Zabbix |
+| MySQL | `mysql:8.0-oracle` | База данных Zabbix |
+
+Также в Docker Compose используются вспомогательные сервисы:
+
+- `server-db-init` — инициализация базы данных Zabbix;
+- `db-data-mysql` — вспомогательный сервис, использующий каталог данных MySQL.
 
 ## Порты
-- Zabbix Web: 8081, 14443
-- Zabbix Server: 10051
 
-## Используемые команды
+| Порт хоста | Порт контейнера | Назначение |
+|---|---|---|
+| `8081` | `8080` | Zabbix Web HTTP |
+| `14443` | `9443` | Zabbix Web HTTPS |
+| `10051` | `10051` | Zabbix Server |
+| `—` | `3306` | MySQL |
+| `—` | `33060` | MySQL X Protocol |
+
+Порты MySQL `3306` и `33060` не опубликованы на хосте.
+MySQL доступен другим компонентам стека через внутреннюю Docker-сеть `database`.
+
+## Docker-сети
+
+Для взаимодействия контейнеров Docker создает виртуальные сети.
+
+В данном стеке используются сети типа `bridge`. Такая сеть работает как
+виртуальная сеть внутри Linux-хоста: подключенные к ней контейнеры получают
+собственные IP-адреса и могут взаимодействовать друг с другом.
+
+### Основные термины
+
+- `bridge` — тип Docker-сети. Контейнеры подключаются к виртуальному Linux bridge
+  и получают IP-адреса из заданной подсети.
+- `subnet` — диапазон IP-адресов, выделенный для сети. Например,
+  `172.16.238.0/24`.
+- `Internal=true` — Docker создает изолированную внутреннюю сеть без обычного
+  доступа во внешние сети через эту сеть. Контейнеры внутри нее при этом могут
+  взаимодействовать друг с другом.
+- `frontend`, `backend`, `database`, `tools_frontend` — обычные имена сетей,
+  заданные в Docker Compose. Эти названия не являются специальными или
+  зарезервированными словами Docker.
+
+Имена сетей выбираются по их назначению, чтобы конфигурацию было проще читать.
+Например, сеть `database` используется для взаимодействия компонентов с базой
+данных.
+
+### Сети Zabbix
+
+| Сеть | Подсеть | Internal | Назначение |
+|---|---|---|---|
+| `frontend` | `172.16.238.0/24` | `false` | Сеть, к которой подключены Zabbix Web и Zabbix Server |
+| `backend` | `172.16.239.0/24` | `true` | Внутренняя сеть между компонентами Zabbix |
+| `database` | `172.19.0.0/16` | `true` | Внутренняя сеть для компонентов, которым необходим доступ к MySQL |
+| `tools_frontend` | `172.16.240.0/24` | `false` | Отдельная сеть, к которой подключен Zabbix Server |
+
+Сети `backend` и `database` имеют параметр `Internal=true` и используются
+для внутреннего взаимодействия контейнеров.
+
+MySQL подключен только к сети `database` и не подключен к `frontend` или
+`backend`.
+
+### Подключение контейнеров к сетям
+
+Один Docker-контейнер может быть подключен сразу к нескольким сетям.
+В каждой сети контейнер получает отдельный IP-адрес.
+
+В данном стеке:
+
+| Контейнер | Сеть | IP-адрес |
+|---|---|---|
+| Zabbix Web | `frontend` | `172.16.238.2` |
+| Zabbix Web | `backend` | `172.16.239.2` |
+| Zabbix Web | `database` | `172.19.0.3` |
+| Zabbix Server | `frontend` | `172.16.238.3` |
+| Zabbix Server | `backend` | `172.16.239.3` |
+| Zabbix Server | `database` | `172.19.0.4` |
+| Zabbix Server | `tools_frontend` | `172.16.240.2` |
+| MySQL | `database` | `172.19.0.2` |
+
+Например, Zabbix Web имеет три IP-адреса:
+
+```text
+frontend  -> 172.16.238.2
+backend   -> 172.16.239.2
+database  -> 172.19.0.3
+```
+
+Это можно сравнить с Linux-сервером, подключенным к нескольким сетям:
+контейнер получает отдельный сетевой интерфейс и IP-адрес для каждого
+подключения к Docker-сети.
+
+### Пример сегментации
+
+MySQL находится только в сети `database`:
+
+```text
+                   database
+                172.19.0.0/16
+                       |
+          +------------+------------+
+          |            |            |
+          v            v            v
+       MySQL       Zabbix Web   Zabbix Server
+    172.19.0.2     172.19.0.3    172.19.0.4
+```
+
+При этом MySQL не требуется подключать к `frontend`:
+
+```text
+                   frontend
+                172.16.238.0/24
+                       |
+               +-------+-------+
+               |               |
+               v               v
+          Zabbix Web      Zabbix Server
+          172.16.238.2     172.16.238.3
+
+               MySQL здесь нет
+```
+
+Такое разделение сетей позволяет логически отделить разные типы взаимодействия
+между компонентами стека.
+
+## Service Discovery и Docker DNS
+
+Для взаимодействия контейнеров Docker предоставляет встроенный DNS.
+Он позволяет обращаться к другим контейнерам по имени сервиса вместо
+использования жестко заданных IP-адресов.
+
+Например, Zabbix Web настроен на обращение к Zabbix Server по имени:
+
+```text
+ZBX_SERVER_HOST=zabbix-server
+```
+
+Проверить разрешение имени можно непосредственно из контейнера:
+
 ```bash
-docker ps
-docker logs --tail 20 zabbix-docker-zabbix-server-1
-docker logs --tail 20 zabbix-docker-zabbix-web-nginx-mysql-1
+docker exec zabbix-docker-zabbix-web-nginx-mysql-1 \
+  getent hosts zabbix-server
+```
+
+Результат:
+
+```text
+172.16.238.3    zabbix-server
+```
+
+Таким образом:
+
+```text
+Zabbix Web
+    |
+    | zabbix-server
+    v
+Docker DNS
+    |
+    | 172.16.238.3
+    v
+Zabbix Server
+```
+
+Аналогично имя MySQL можно разрешить из контейнера Zabbix Server:
+
+```bash
+docker exec zabbix-docker-zabbix-server-1 \
+  getent hosts mysql-server
+```
+
+Результат:
+
+```text
+172.19.0.2    mysql-server
+```
+
+Здесь `mysql-server` — DNS-имя, доступное контейнерам в общей Docker-сети,
+а `172.19.0.2` — текущий IP-адрес MySQL в сети `database`.
+
+Использование DNS-имен вместо жестко заданных IP-адресов упрощает
+взаимодействие контейнеров: при пересоздании контейнера его IP-адрес
+может измениться, при этом имя сервиса остается прежним.
