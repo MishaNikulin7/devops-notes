@@ -17,17 +17,6 @@ Nginx используется как точка входа для нескол�
 - проксирование запросов к локальным backend-сервисам
 - диагностика через `nginx -t`, `systemctl`, `journalctl`, `ss` и `curl`
 
-## Стек
-
-- AlmaLinux 9
-- Nginx
-- systemd
-- Let's Encrypt / Certbot
-- Docker
-- Zabbix
-- DNS
-- HTTP/HTTPS
-
 ## Архитектура
 
 ```text
