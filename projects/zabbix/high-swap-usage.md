@@ -122,8 +122,83 @@ Zabbix предупреждение:
 Linux: High swap space usage
 исчезло.
 
-Вывод
+## Как добавить дополнительный swap-файл размером 1 ГБ
 
-Для небольшого VPS с ограниченным объёмом RAM значение:
-vm.swappiness=20
-лучше подходит, так как Linux меньше стремится использовать Swap без необходимости.
+Этот способ не изменяет существующий swap-раздел.  
+К уже существующему swap просто добавляется ещё один swap-файл.
+
+### 1. Проверить текущий swap
+
+```bash
+swapon --show
+free -h
+
+2. Создать файл размером 1 ГБ
+fallocate -l 1G /swapfile
+
+Проверить:
+ls -lh /swapfile
+
+3. Ограничить права доступа
+Swap-файл должен быть доступен только root:
+chmod 600 /swapfile
+
+Проверить:
+ls -l /swapfile
+
+Должно быть примерно так:
+-rw------- 1 root root 1.0G ... /swapfile
+
+4. Подготовить файл как swap
+mkswap /swapfile
+
+5. Подключить swap
+swapon /swapfile
+
+Проверить:
+swapon --show
+
+После этого должен появиться /swapfile.
+6. Добавить автоподключение после перезагрузки
+Добавить строку в /etc/fstab:
+echo '/swapfile none swap sw 0 0' >> /etc/fstab
+
+Проверить:
+grep '/swapfile' /etc/fstab
+
+Ожидаемый результат:
+/swapfile none swap sw 0 0
+
+7. Финальная проверка
+free -h
+swapon --show
+
+В моём случае получилось:
+Swap: 2.0Gi
+
+Активные swap-области:
+/dev/vda2 partition 1024M
+/swapfile file      1024M
+
+Таким образом, к существующему swap размером 1 ГБ был добавлен ещё один swap-файл размером 1 ГБ.
+Итоговый объём swap:
+1 ГБ → 2 ГБ
+
+Если понадобится добавить ещё 1 ГБ в будущем
+Например, можно создать второй файл:
+fallocate -l 1G /swapfile2
+chmod 600 /swapfile2
+mkswap /swapfile2
+swapon /swapfile2
+echo '/swapfile2 none swap sw 0 0' >> /etc/fstab
+
+Проверить:
+swapon --show
+free -h
+
+Тогда суммарный swap станет:
+3 ГБ
+
+Важный момент: **не запускай повторно**
+```bash
+fallocate -l 1G /swapfile
